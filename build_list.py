@@ -298,7 +298,7 @@ EXCLUDED = [
 ]
 
 FIELDS = [
-    ('game', '游戏名'), ('layer', 'AI介入层级'), ('conf', '置信度'),
+    ('game', '游戏名'), ('platform', '平台'), ('layer', 'AI介入层级'), ('conf', '置信度'),
     ('company', '公司主体'), ('city', '所在城市'), ('founder', '核心团队背景'),
     ('team_size', '团队规模'), ('funding', '融资情况'),
     ('ai_mech', 'AI机制描述'), ('ai_cost', 'AI成本披露'),
@@ -307,6 +307,34 @@ FIELDS = [
     ('other_product', '其他产品/工具链'), ('visit_value', '拜访价值判断'),
     ('app_id', 'TapTap AppID'), ('src', '证据来源'),
 ]
+
+# 平台标注。来源分级：「实测」= TapTap platform_info 字段抓取（2026-08-17）；
+# 「渠道」= 按已知发行渠道推断；「待核实」= 信息不足。
+PLATFORM = {
+    '历史模拟器：崇祯': 'PC（实测；TapTap PC 端 + Steam）',
+    '麦琪的花园 Magi Scapes': 'PC 优先（Steam 三测），移动端计划',
+    '乌托 Agentopia': '手游双端（实测 android+iOS）',
+    '福尔摩斯：暗夜追踪者': 'PC+手游（Steam + TapTap 预约）',
+    '群星低语 Whispers from the Star': '手游双端（实测 android+iOS）',
+    '超自然行动组': '手游+PC（全渠道，双端互通）',
+    '不问凡尘': '待核实（大概率手游）',
+    '印格 Engram': 'PC（Steam）',
+    'AIFriends': '手游双端（实测 android+iOS）',
+    'EVE': '手游（iOS + TapTap）',
+    'AI小镇：星原': '待核实',
+    '混想局': '待核实',
+    '黑箱：无限构筑': '待核实',
+    'MoMo': '待核实（陪伴类大概率手游）',
+    '假如我是人工智能 If I am AI': '手游双端（实测 android+iOS）',
+    '星眠': '手游（预约中）',
+    '赎命电波': '待核实',
+    '重生之我在产业园当AI': '待核实',
+    '流言侦探': '手游（TapTap）',
+}
+
+# 模块加载时把平台映射注入每条记录，供 CSV 与看板共用
+for _r in ROWS:
+    _r['platform'] = PLATFORM.get(_r['game'], '待核实')
 
 if __name__ == '__main__':
     with open('taptap_ai_games_visit_list.csv', 'w', encoding='utf-8-sig', newline='') as fp:

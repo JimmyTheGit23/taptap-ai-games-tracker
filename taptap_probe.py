@@ -52,6 +52,51 @@ def deref(p, node, depth=0, maxd=6):
     return node
 
 
+def fetch_platforms(app_id):
+    """取支持平台列表，如 ['android','ios'] / ['pc']。
+
+    platform_info.supported_platforms 是三层嵌套引用，deref 默认深度取不到，
+    这里在原始 payload 上手动逐层解引用。
+    """
+    t = get(f'https://www.taptap.cn/app/{app_id}')
+    p = nuxt_payload(t)
+    if not p:
+        return []
+    for o in p:
+        if isinstance(o, dict) and 'platform_info' in o:
+            pi = p[o['platform_info']]
+            sp = pi.get('supported_platforms')
+            arr = p[sp] if isinstance(sp, int) else sp
+            keys = []
+            if isinstance(arr, list):
+                for el in arr:
+                    node = p[el] if isinstance(el, int) else el
+                    if isinstance(node, dict):
+                        k = node.get('key')
+                        val = p[k] if isinstance(k, int) else k
+                        if isinstance(val, str):
+                            keys.append(val)
+            return keys
+    return []
+
+
+PLATFORM_LABEL = {
+    frozenset(['pc']): 'PC',
+    frozenset(['android']): '手游(安卓)',
+    frozenset(['ios']): '手游(iOS)',
+    frozenset(['android', 'ios']): '手游(双端)',
+}
+
+
+def platform_label(keys):
+    ks = frozenset(keys)
+    if ks in PLATFORM_LABEL:
+        return PLATFORM_LABEL[ks]
+    parts = [('手游' if 'android' in ks or 'ios' in ks else ''),
+             ('PC' if 'pc' in ks else '')]
+    return '+'.join(x for x in parts if x) or '未标注'
+
+
 if __name__ == '__main__':
     t = get('https://www.taptap.cn/app/746715')
     p = nuxt_payload(t)

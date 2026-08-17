@@ -110,6 +110,9 @@ L3（生产管线 AI 重度）未做全量收录 —— 开发者普遍不主动
   <button data-f="L1">L1 原生</button>
   <button data-f="L2">L2 增强</button>
   <div class="sp"></div>
+  <button data-f="pc">PC</button>
+  <button data-f="mobile">手游</button>
+  <div class="sp"></div>
   <button data-f="visitable">可拜访</button>
   <span class="cnt" id="cnt"></span>
 </div>
@@ -133,6 +136,8 @@ function apply(f){
   cards.forEach(function(c){
     var ok = f==='all' ? true
       : f==='visitable' ? c.dataset.visitable==='1'
+      : f==='pc' ? c.dataset.pc==='1'
+      : f==='mobile' ? c.dataset.mobile==='1'
       : (c.dataset.conf===f || c.dataset.layer===f);
     c.classList.toggle('hid',!ok); if(ok)n++;
   });
@@ -154,9 +159,14 @@ def esc(s):
 
 def card(r):
     visitable = '0' if ('待核实' in r['city'] or '非国内' in r['city']) else '1'
+    plat = r.get('platform', '待核实')
+    # 平台筛选标记：pc 端（含 PC/Steam）与手游端可同时为真
+    is_pc = '1' if ('PC' in plat or 'Steam' in plat) else '0'
+    is_mobile = '1' if ('手游' in plat or 'android' in plat or 'iOS' in plat) else '0'
     link = (f'<a href="https://www.taptap.cn/app/{r["app_id"]}" target="_blank">'
             f'TapTap 页面 →</a>') if r['app_id'] else ''
     fields = [
+        ('平台', plat),
         ('核心团队背景', r['founder']), ('团队规模', r['team_size']),
         ('融资情况', r['funding']), ('当前阶段与数据', r['stage']),
         ('发行渠道', r['channel']), ('联系方式', r['contact']),
@@ -173,11 +183,11 @@ def card(r):
                f'<div class="v">{esc(r["ai_cost"])}</div></div>')
     fs += (f'<div class="f full"><div class="k">证据来源</div>'
            f'<div class="v">{esc(r["src"])}</div></div>')
-    return f"""<div class="card" data-conf="{r['conf']}" data-layer="{r['layer']}" data-visitable="{visitable}">
+    return f"""<div class="card" data-conf="{r['conf']}" data-layer="{r['layer']}" data-visitable="{visitable}" data-pc="{is_pc}" data-mobile="{is_mobile}">
 <div class="hd"><span class="nm">{esc(r['game'])}</span>
 <span class="tag t-{r['layer']}">{LAYER_LABEL.get(r['layer'], r['layer'])}</span>
 <span class="tag t-{r['conf']}">{CONF_LABEL[r['conf']]}</span>{link}</div>
-<div class="co"><b>{esc(r['company'])}</b> · {esc(r['city'])}</div>
+<div class="co"><b>{esc(r['company'])}</b> · {esc(r['city'])} · {esc(plat)}</div>
 <div class="gr">{fs}</div>
 <div class="vv"><b>拜访价值 </b>{esc(r['visit_value'])}</div>
 </div>"""
