@@ -13,7 +13,7 @@ SHOT_DIR = 'screenshots'
 
 
 def shot_key(game):
-    return re.sub(r'[^\w一-鿿]+', '_', game)[:40]
+    return re.sub(r'[^\w一-鿿]+', '_', game).strip('_')[:40]
 
 
 def shots_for(game):
