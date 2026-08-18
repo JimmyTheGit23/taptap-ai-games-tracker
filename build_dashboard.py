@@ -117,8 +117,8 @@ button.on{background:var(--tx);color:#fff;border-color:var(--tx)}
 .t-A{background:var(--abg);color:var(--a)} .t-B{background:var(--bbg);color:var(--b)}
 .t-C{background:var(--cbg);color:var(--c)}
 .lk{display:inline-flex;gap:6px;flex-wrap:wrap}
-.shots{display:flex;gap:10px;margin:10px 0 4px}
-.shots img{height:130px;width:auto;border-radius:8px;border:0.5px solid var(--line);
+.shots{display:flex;gap:10px;margin:10px 0 4px;flex-wrap:wrap;overflow:hidden}
+.shots img{height:130px;max-width:min(320px,100%);width:auto;border-radius:8px;border:0.5px solid var(--line);
   object-fit:cover;cursor:zoom-in;background:#f0eeea}
 .shots img:hover{opacity:.9}
 .lbbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:99;
