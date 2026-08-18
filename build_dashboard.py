@@ -195,13 +195,7 @@ h2{font-size:15px;font-weight:500;margin:34px 0 12px}
 
 <div id="list">__CARDS__</div>
 
-<h2>明确排除项</h2>
-__EXCLUDED__
-
 <div class="foot">
-字段设计针对实地拜访场景：公司主体与所在城市用于安排行程，核心团队背景用于判断对话层级，
-融资情况用于判断合作阶段，AI 机制描述用于准备技术问题，AI 成本披露是极少数团队会公开的稀缺信息，
-展会出没记录是低成本接触的机会窗口。<br>
 「拜访价值」默认内容仅供参考，可直接在网页中编辑，修改结果保存在当前浏览器本地。<br>
 CSV 版本另含「拜访状态 / 接触人 / 拜访日期 / 跟进备注」四个空列，可直接作为跟进表使用。
 </div>
@@ -345,14 +339,8 @@ if __name__ == '__main__':
         f'<a href="#{game_anchor(r["game"])}" title="{esc(r["game"])}">{esc(r["game"])}</a>'
         for r in rows
     )
-    ex = '\n'.join(
-        f'<div class="ex"><div class="g">{esc(e["game"])}'
-        + (f'（{esc(e["company"])}）' if e['company'] else '')
-        + f'</div><div class="r">{esc(e["reason"])}</div></div>'
-        for e in EXCLUDED
-    )
     nvisit = sum(1 for r in ROWS if '待核实' not in r['city'] and '非国内' not in r['city'])
-    html = (HTML.replace('__CARDS__', cards).replace('__NAV__', nav_items).replace('__EXCLUDED__', ex)
+    html = (HTML.replace('__CARDS__', cards).replace('__NAV__', nav_items)
             .replace('__N__', str(len(ROWS)))
             .replace('__NA__', str(sum(1 for r in ROWS if r['conf'] == 'A')))
             .replace('__NL1__', str(sum(1 for r in ROWS if r['layer'] == 'L1')))
