@@ -109,7 +109,16 @@ button.on{background:var(--tx);color:#fff;border-color:var(--tx)}
 .f.full{grid-column:1/-1}
 .vv{background:#f7f6f3;border-radius:8px;padding:10px 12px;margin-top:10px;
   font-size:13px;color:var(--tx2)}
-.vv b{color:var(--tx);font-weight:500}
+.vv-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+.vv-head b{color:var(--tx);font-weight:500}
+.vv-hint{font-size:11px;color:var(--tx3)}
+.vv-edit{min-height:22px;padding:3px 5px;margin:0 -5px;border-radius:5px;outline:none;
+  color:var(--tx2);white-space:pre-wrap}
+.vv-edit:hover{background:#fff}
+.vv-edit:focus{background:#fff;box-shadow:0 0 0 1px var(--line2);color:var(--tx)}
+.vv-edit[data-saved="1"]:after{content:" 已保存";font-size:11px;color:var(--a)}
+.edit-tools{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}
+.edit-tools button{padding:2px 9px;font-size:11px;border-radius:10px}
 a{color:var(--l1);text-decoration:none} a:hover{text-decoration:underline}
 h2{font-size:15px;font-weight:500;margin:34px 0 12px}
 .ex{background:var(--redbg);border:1px solid #f7c1c1;border-radius:10px;
@@ -158,6 +167,7 @@ __EXCLUDED__
 字段设计针对实地拜访场景：公司主体与所在城市用于安排行程，核心团队背景用于判断对话层级，
 融资情况用于判断合作阶段，AI 机制描述用于准备技术问题，AI 成本披露是极少数团队会公开的稀缺信息，
 展会出没记录是低成本接触的机会窗口。<br>
+「拜访价值」默认内容仅供参考，可直接在网页中编辑，修改结果保存在当前浏览器本地。<br>
 CSV 版本另含「拜访状态 / 接触人 / 拜访日期 / 跟进备注」四个空列，可直接作为跟进表使用。
 </div>
 </div>
@@ -185,6 +195,24 @@ box.innerHTML='<img>';
 box.onclick=function(){box.classList.remove('on')};
 document.body.appendChild(box);
 function lb(src){box.querySelector('img').src=src;box.classList.add('on')}
+var visitKey='taptap-ai-visit-values-v1';
+function readVisits(){try{return JSON.parse(localStorage.getItem(visitKey)||'{}')}catch(e){return {}}}
+function writeVisits(data){try{localStorage.setItem(visitKey,JSON.stringify(data))}catch(e){}}
+var visitData=readVisits();
+document.querySelectorAll('.vv-edit').forEach(function(el){
+  var game=el.dataset.game;
+  if(Object.prototype.hasOwnProperty.call(visitData,game))el.textContent=visitData[game];
+  el.addEventListener('input',function(){
+    visitData[game]=el.textContent.trim();writeVisits(visitData);
+    el.dataset.saved='1';clearTimeout(el._st);el._st=setTimeout(function(){el.dataset.saved='0'},900);
+  });
+  el.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur()}});
+});
+function resetVisit(btn){
+  var el=btn.closest('.vv').querySelector('.vv-edit'),game=el.dataset.game;
+  el.textContent=el.dataset.default;delete visitData[game];writeVisits(visitData);
+  el.dataset.saved='1';setTimeout(function(){el.dataset.saved='0'},900);
+}
 </script>
 </body>
 </html>"""
@@ -243,7 +271,11 @@ def card(r):
 <div class="co"><b>{esc(r['company'])}</b> · {esc(r['city'])} · {esc(plat)}</div>
 {shots_html}
 <div class="gr">{fs}</div>
-<div class="vv"><b>拜访价值 </b>{esc(r['visit_value'])}</div>
+<div class="vv">
+  <div class="vv-head"><b>拜访价值</b><span class="vv-hint">默认内容仅供参考，可直接点击编辑</span></div>
+  <div class="vv-edit" contenteditable="true" spellcheck="false" data-game="{esc(r['game'])}" data-default="{esc(r['visit_value'])}">{esc(r['visit_value'])}</div>
+  <div class="edit-tools"><button type="button" onclick="resetVisit(this)">恢复默认</button></div>
+</div>
 </div>"""
 
 
