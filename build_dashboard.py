@@ -1,5 +1,5 @@
 """在 build_list.py 数据基础上生成单文件 HTML 看板。"""
-import json, os, re, glob
+import json, os, re, glob, hashlib
 from build_list import ROWS, EXCLUDED, LINKS
 
 LAYER_LABEL = {
@@ -21,6 +21,12 @@ def shots_for(game):
     key = shot_key(game)
     files = sorted(glob.glob(os.path.join(SHOT_DIR, key + '_*.*')))
     return [os.path.basename(f) for f in files[:2]]
+
+
+def game_anchor(game):
+    """生成稳定且安全的卡片锚点。"""
+    digest = hashlib.md5(game.encode('utf-8')).hexdigest()[:10]
+    return f'game-{digest}'
 
 
 def link_label(url):
@@ -64,6 +70,28 @@ HTML = """<!DOCTYPE html>
 body{margin:0;background:var(--bg);color:var(--tx);
   font:400 14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 .wrap{max-width:1240px;margin:0 auto;padding:32px 24px 64px}
+.game-nav{position:fixed;top:28px;left:max(16px,calc(50% - 790px));width:150px;
+  max-height:calc(100vh - 56px);display:flex;flex-direction:column;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:12px;z-index:20}
+.nav-title{font-size:13px;font-weight:500;margin-bottom:8px}
+.nav-search{width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 8px;
+  font:inherit;font-size:12px;color:var(--tx);background:#fff;margin-bottom:8px;outline:none}
+.nav-search:focus{border-color:var(--line2)}
+.nav-list{overflow:auto;display:flex;flex-direction:column;gap:2px;padding-right:2px}
+.nav-list a{display:block;padding:5px 7px;border-radius:6px;font-size:12px;line-height:1.35;
+  color:var(--tx2);text-decoration:none;word-break:break-word}
+.nav-list a:hover{background:var(--cbg);color:var(--tx)}
+.nav-list a.active{background:var(--l1bg);color:var(--l1);font-weight:500}
+.nav-list a.nav-hidden{display:none}
+.nav-count{font-size:11px;color:var(--tx3);margin-top:7px;padding-top:7px;border-top:1px solid var(--line)}
+.nav-toggle{display:none;position:fixed;left:14px;bottom:16px;z-index:30;background:var(--tx);
+  color:#fff;border-color:var(--tx);border-radius:18px;padding:7px 13px}
+@media(max-width:1580px){
+  .game-nav{left:14px;top:14px;transform:translateX(-180px);transition:transform .18s ease;
+    max-height:calc(100vh - 28px)}
+  .game-nav.open{transform:translateX(0)}
+  .nav-toggle{display:block}
+}
 h1{font-size:22px;font-weight:500;margin:0 0 6px}
 .sub{color:var(--tx2);font-size:13px;margin-bottom:24px}
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
@@ -130,6 +158,13 @@ h2{font-size:15px;font-weight:500;margin:34px 0 12px}
 </style>
 </head>
 <body>
+<aside class="game-nav" id="gameNav" aria-label="游戏快捷跳转">
+  <div class="nav-title">游戏列表</div>
+  <input class="nav-search" id="navSearch" type="search" placeholder="搜索游戏" autocomplete="off">
+  <div class="nav-list" id="navList">__NAV__</div>
+  <div class="nav-count" id="navCount">共 __N__ 款</div>
+</aside>
+<button class="nav-toggle" id="navToggle" type="button">游戏目录</button>
 <div class="wrap">
 <h1>TapTap AI 游戏拜访追踪清单</h1>
 <div class="sub">已排除 TapTap Maker（TapTap 制造）产出 · 数据核准于 2026-08-17</div>
@@ -213,6 +248,26 @@ function resetVisit(btn){
   el.textContent=el.dataset.default;delete visitData[game];writeVisits(visitData);
   el.dataset.saved='1';setTimeout(function(){el.dataset.saved='0'},900);
 }
+var nav=document.getElementById('gameNav'),navList=document.getElementById('navList');
+document.getElementById('navToggle').onclick=function(){nav.classList.toggle('open')};
+document.getElementById('navSearch').addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase(),n=0;
+  navList.querySelectorAll('a').forEach(function(a){
+    var show=!q||a.textContent.toLowerCase().indexOf(q)>=0;
+    a.classList.toggle('nav-hidden',!show);if(show)n++;
+  });
+  document.getElementById('navCount').textContent='显示 '+n+' / '+navList.querySelectorAll('a').length+' 款';
+});
+navList.querySelectorAll('a').forEach(function(a){a.onclick=function(){
+  navList.querySelectorAll('a').forEach(function(x){x.classList.remove('active')});
+  a.classList.add('active');if(innerWidth<=1580)nav.classList.remove('open');
+}});
+var observer=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){if(e.isIntersecting){
+    navList.querySelectorAll('a').forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id)});
+  }});
+},{rootMargin:'-15% 0px -75% 0px'});
+cards.forEach(function(c){observer.observe(c)});
 </script>
 </body>
 </html>"""
@@ -254,6 +309,7 @@ def card(r):
                f'<div class="v">{esc(r["ai_cost"])}</div></div>')
     fs += (f'<div class="f full"><div class="k">证据来源</div>'
            f'<div class="v">{esc(r["src"])}</div></div>')
+    anchor = game_anchor(r['game'])
     shot_files = shots_for(r['game'])
     shots_html = ''
     if shot_files:
@@ -263,7 +319,7 @@ def card(r):
             for fn in shot_files
         )
         shots_html = f'<div class="shots">{imgs}</div>'
-    return f"""<div class="card" data-conf="{r['conf']}" data-layer="{r['layer']}" data-visitable="{visitable}" data-pc="{is_pc}" data-mobile="{is_mobile}">
+    return f"""<div class="card" id="{anchor}" data-conf="{r['conf']}" data-layer="{r['layer']}" data-visitable="{visitable}" data-pc="{is_pc}" data-mobile="{is_mobile}">
 <div class="hd"><span class="nm">{esc(r['game'])}</span>
 <span class="tag t-{r['layer']}">{LAYER_LABEL.get(r['layer'], r['layer'])}</span>
 <span class="tag t-{r['conf']}">{CONF_LABEL[r['conf']]}</span>
@@ -285,6 +341,10 @@ if __name__ == '__main__':
     rows = sorted(ROWS, key=lambda x: (conf_order.get(x['conf'], 9),
                                        layer_order.get(x['layer'], 9), x['game']))
     cards = '\n'.join(card(r) for r in rows)
+    nav_items = '\n'.join(
+        f'<a href="#{game_anchor(r["game"])}" title="{esc(r["game"])}">{esc(r["game"])}</a>'
+        for r in rows
+    )
     ex = '\n'.join(
         f'<div class="ex"><div class="g">{esc(e["game"])}'
         + (f'（{esc(e["company"])}）' if e['company'] else '')
@@ -292,7 +352,7 @@ if __name__ == '__main__':
         for e in EXCLUDED
     )
     nvisit = sum(1 for r in ROWS if '待核实' not in r['city'] and '非国内' not in r['city'])
-    html = (HTML.replace('__CARDS__', cards).replace('__EXCLUDED__', ex)
+    html = (HTML.replace('__CARDS__', cards).replace('__NAV__', nav_items).replace('__EXCLUDED__', ex)
             .replace('__N__', str(len(ROWS)))
             .replace('__NA__', str(sum(1 for r in ROWS if r['conf'] == 'A')))
             .replace('__NL1__', str(sum(1 for r in ROWS if r['layer'] == 'L1')))
