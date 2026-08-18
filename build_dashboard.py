@@ -1,6 +1,6 @@
 """在 build_list.py 数据基础上生成单文件 HTML 看板。"""
 import json
-from build_list import ROWS, EXCLUDED
+from build_list import ROWS, EXCLUDED, LINKS
 
 LAYER_LABEL = {
     'L1': 'L1 运行时 AI 原生',
@@ -8,6 +8,23 @@ LAYER_LABEL = {
     'L3': 'L3 生产管线 AI 重度',
 }
 CONF_LABEL = {'A': '已核实', 'B': '较可靠', 'C': '待核实'}
+
+
+def link_label(url):
+    """从 URL 推断显示名。"""
+    if 'steampowered.com' in url:
+        return 'Steam'
+    if 'taptap.cn' in url or 'taptap.com' in url:
+        return 'TapTap'
+    if 'itch.io' in url:
+        return 'itch.io'
+    if 'wegamedb' in url:
+        return 'WeGame'
+    if 'afdian' in url:
+        return '爱发电'
+    if any(d in url for d in ('donews', 'hstong', '163.com', 'qq.com', 'toutiao', 'sohu', 'sina')):
+        return '报道'
+    return '官网'
 
 CITY_GROUP = {}
 for r in ROWS:
@@ -58,6 +75,10 @@ button.on{background:var(--tx);color:#fff;border-color:var(--tx)}
 .t-L1{background:var(--l1bg);color:var(--l1)} .t-L2{background:var(--l2bg);color:var(--l2)}
 .t-A{background:var(--abg);color:var(--a)} .t-B{background:var(--bbg);color:var(--b)}
 .t-C{background:var(--cbg);color:var(--c)}
+.lk{display:inline-flex;gap:6px;flex-wrap:wrap}
+.lk a{font-size:12px;padding:2px 10px;border:0.5px solid var(--line2);border-radius:10px;
+  color:var(--l1);background:#fff}
+.lk a:hover{background:var(--l1bg);text-decoration:none}
 .co{font-size:13px;color:var(--tx2);margin-bottom:12px}
 .co b{font-weight:500;color:var(--tx)}
 .gr{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 22px}
@@ -163,8 +184,14 @@ def card(r):
     # 平台筛选标记：pc 端（含 PC/Steam）与手游端可同时为真
     is_pc = '1' if ('PC' in plat or 'Steam' in plat) else '0'
     is_mobile = '1' if ('手游' in plat or 'android' in plat or 'iOS' in plat) else '0'
-    link = (f'<a href="https://www.taptap.cn/app/{r["app_id"]}" target="_blank">'
-            f'TapTap 页面 →</a>') if r['app_id'] else ''
+    # 链接渲染：优先 LINKS 映射（含 Steam/官网等），无映射但有 app_id 时给 TapTap 页
+    raw_links = LINKS.get(r['game'], [])
+    if not raw_links and r['app_id']:
+        raw_links = [f'https://www.taptap.cn/app/{r["app_id"]}']
+    links_html = ''.join(
+        f'<a href="{esc(u)}" target="_blank">{link_label(u)} ↗</a>'
+        for u in raw_links
+    )
     fields = [
         ('平台', plat),
         ('核心团队背景', r['founder']), ('团队规模', r['team_size']),
@@ -186,7 +213,8 @@ def card(r):
     return f"""<div class="card" data-conf="{r['conf']}" data-layer="{r['layer']}" data-visitable="{visitable}" data-pc="{is_pc}" data-mobile="{is_mobile}">
 <div class="hd"><span class="nm">{esc(r['game'])}</span>
 <span class="tag t-{r['layer']}">{LAYER_LABEL.get(r['layer'], r['layer'])}</span>
-<span class="tag t-{r['conf']}">{CONF_LABEL[r['conf']]}</span>{link}</div>
+<span class="tag t-{r['conf']}">{CONF_LABEL[r['conf']]}</span>
+<span class="lk">{links_html}</span></div>
 <div class="co"><b>{esc(r['company'])}</b> · {esc(r['city'])} · {esc(plat)}</div>
 <div class="gr">{fs}</div>
 <div class="vv"><b>拜访价值 </b>{esc(r['visit_value'])}</div>

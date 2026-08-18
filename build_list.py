@@ -476,8 +476,44 @@ FIELDS = [
     ('stage', '当前阶段与数据'), ('channel', '发行渠道'),
     ('contact', '联系方式'), ('expo', '展会出没记录'),
     ('other_product', '其他产品/工具链'), ('visit_value', '拜访价值判断'),
-    ('app_id', 'TapTap AppID'), ('src', '证据来源'),
+    ('app_id', 'TapTap AppID'), ('links', '相关链接'), ('src', '证据来源'),
 ]
+
+# 相关链接（商店页/官网/报道）。全部来自调研时实际检索到的 URL，未做猜测。
+LINKS = {
+    '历史模拟器：崇祯': ['https://www.taptap.cn/app/813198'],
+    '麦琪的花园 Magi Scapes': ['https://store.steampowered.com/app/2990190/', 'https://autogame.ai'],
+    '乌托 Agentopia': ['https://www.taptap.cn/app/773812'],
+    '群星低语 Whispers from the Star': ['https://www.taptap.cn/app/746715'],
+    'AIFriends': ['https://www.taptap.cn/app/771203'],
+    '假如我是人工智能 If I am AI': ['https://www.taptap.cn/app/156070'],
+    'AI小镇：星原（Aivilization）': ['https://aivilization.ai/', 'https://aitown.com.cn'],
+    '遥远行星：建造师': ['https://store.steampowered.com/app/3105960/', 'https://www.taptap.cn/app/756378', 'https://wegamedb.info/products/2008511'],
+    'AI2U：与你直到世界尽头': ['https://store.steampowered.com/app/2880730/', 'https://www.taptap.cn/app/765584/all-info'],
+    'Bside（Bside: Desktop Mate）': ['https://store.steampowered.com/app/3649950/Bside_Desktop_Mate/', 'https://www.bside.zone/'],
+    '星夜颂歌': ['https://c.aiiz.cn/xRYbWs', 'https://www.donews.com/news/detail/4/6454247.html'],
+    '芽灵小屋': ['https://store.steampowered.com/app/3872860/_/', 'https://www.taptap.cn/app/860204'],
+    '灵壳计划 EchoShell': ['https://store.steampowered.com/app/3871060'],
+    '诡秘推理': ['https://store.steampowered.com/app/3184990/_/', 'https://www.taptap.cn/topic/47698476'],
+    '妹居物语': ['https://store.steampowered.com/app/3963620', 'https://www.taptap.cn/app/782330'],
+    '千夜之书 1001（1001 Nights）': ['https://store.steampowered.com/app/2542850/1001_Nights/', 'https://www.1001nights.ai', 'https://ada-eden.itch.io/1001-nights-official'],
+    '共鸣计划（Project RESONANCE）': ['https://store.steampowered.com/app/4810230/_/'],
+    '雾岛新闻社': ['https://aquqa.itch.io/kirishima-news-club', 'https://afdian.com/a/aquqa'],
+    '代号：如意（如意情探）': ['https://www.cyberpinky.co/主页/'],
+    'Lunaverse（Lunaverse Stories）': ['https://www.hstong.com/news/hk/detail/26070109050153127'],
+    '超自然行动组': [],
+    '福尔摩斯：暗夜追踪者': [],
+    '不问凡尘': [],
+    '印格 Engram': [],
+    'EVE': [],
+    '混想局': [],
+    '黑箱：无限构筑': [],
+    'MoMo': [],
+    '星眠': [],
+    '赎命电波': [],
+    '重生之我在产业园当AI': [],
+    '流言侦探': [],
+}
 
 # 平台标注。来源分级：「实测」= TapTap platform_info 字段抓取（2026-08-17）；
 # 「渠道」= 按已知发行渠道推断；「待核实」= 信息不足。
@@ -522,19 +558,19 @@ PLATFORM = {
 #     但产品名不一致，无法确认
 #   有友（I have a friend）——TapTap/Steam/机核/行业盘点均无结果；近似项均不相关
 
-# 模块加载时把平台映射注入每条记录，供 CSV 与看板共用
+# 模块加载时把平台与链接映射注入每条记录，供 CSV 与看板共用
 for _r in ROWS:
     _r['platform'] = PLATFORM.get(_r['game'], '待核实')
+    _r['links'] = ' '.join(LINKS.get(_r['game'], []))
 
 if __name__ == '__main__':
     with open('taptap_ai_games_visit_list.csv', 'w', encoding='utf-8-sig', newline='') as fp:
         w = csv.writer(fp)
-        w.writerow([label for _, label in FIELDS] + ['TapTap链接', '拜访状态', '接触人', '拜访日期', '跟进备注'])
+        w.writerow([label for _, label in FIELDS] + ['拜访状态', '接触人', '拜访日期', '跟进备注'])
         order = {'L1': 0, 'L2': 1, 'L3': 2}
         conf_order = {'A': 0, 'B': 1, 'C': 2}
         for r in sorted(ROWS, key=lambda x: (conf_order.get(x['conf'], 9), order.get(x['layer'], 9))):
-            link = f"https://www.taptap.cn/app/{r['app_id']}" if r['app_id'] else ''
-            w.writerow([r.get(k, '') for k, _ in FIELDS] + [link, '未接触', '', '', ''])
+            w.writerow([r.get(k, '') for k, _ in FIELDS] + ['未接触', '', '', ''])
         w.writerow([])
         w.writerow(['—— 以下为明确排除项 ——'])
         w.writerow(['游戏名', 'TapTap AppID', '公司', '评分', '排除理由'])
