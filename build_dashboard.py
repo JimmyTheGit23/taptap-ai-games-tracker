@@ -1,5 +1,5 @@
 """在 build_list.py 数据基础上生成单文件 HTML 看板。"""
-import json
+import json, os, re, glob
 from build_list import ROWS, EXCLUDED, LINKS
 
 LAYER_LABEL = {
@@ -8,6 +8,19 @@ LAYER_LABEL = {
     'L3': 'L3 生产管线 AI 重度',
 }
 CONF_LABEL = {'A': '已核实', 'B': '较可靠', 'C': '待核实'}
+
+SHOT_DIR = 'screenshots'
+
+
+def shot_key(game):
+    return re.sub(r'[^\w一-鿿]+', '_', game)[:40]
+
+
+def shots_for(game):
+    """返回 screenshots/ 下该游戏的画面文件名，最多 2 张。"""
+    key = shot_key(game)
+    files = sorted(glob.glob(os.path.join(SHOT_DIR, key + '_*.*')))
+    return [os.path.basename(f) for f in files[:2]]
 
 
 def link_label(url):
@@ -76,6 +89,14 @@ button.on{background:var(--tx);color:#fff;border-color:var(--tx)}
 .t-A{background:var(--abg);color:var(--a)} .t-B{background:var(--bbg);color:var(--b)}
 .t-C{background:var(--cbg);color:var(--c)}
 .lk{display:inline-flex;gap:6px;flex-wrap:wrap}
+.shots{display:flex;gap:10px;margin:10px 0 4px}
+.shots img{height:130px;width:auto;border-radius:8px;border:0.5px solid var(--line);
+  object-fit:cover;cursor:zoom-in;background:#f0eeea}
+.shots img:hover{opacity:.9}
+.lbbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:99;
+  align-items:center;justify-content:center;cursor:zoom-out}
+.lbbox.on{display:flex}
+.lbbox img{max-width:92vw;max-height:90vh;border-radius:8px}
 .lk a{font-size:12px;padding:2px 10px;border:0.5px solid var(--line2);border-radius:10px;
   color:var(--l1);background:#fff}
 .lk a:hover{background:var(--l1bg);text-decoration:none}
@@ -169,6 +190,11 @@ btns.forEach(function(b){b.onclick=function(){
   b.classList.add('on'); apply(b.dataset.f);
 }});
 apply('all');
+var box=document.createElement('div');box.className='lbbox';
+box.innerHTML='<img>';
+box.onclick=function(){box.classList.remove('on')};
+document.body.appendChild(box);
+function lb(src){box.querySelector('img').src=src;box.classList.add('on')}
 </script>
 </body>
 </html>"""
@@ -210,12 +236,22 @@ def card(r):
                f'<div class="v">{esc(r["ai_cost"])}</div></div>')
     fs += (f'<div class="f full"><div class="k">证据来源</div>'
            f'<div class="v">{esc(r["src"])}</div></div>')
+    shot_files = shots_for(r['game'])
+    shots_html = ''
+    if shot_files:
+        imgs = ''.join(
+            f'<img src="{SHOT_DIR}/{esc(fn)}" loading="lazy" alt="{esc(r["game"])} 画面" '
+            f'onclick="lb(this.src)">'
+            for fn in shot_files
+        )
+        shots_html = f'<div class="shots">{imgs}</div>'
     return f"""<div class="card" data-conf="{r['conf']}" data-layer="{r['layer']}" data-visitable="{visitable}" data-pc="{is_pc}" data-mobile="{is_mobile}">
 <div class="hd"><span class="nm">{esc(r['game'])}</span>
 <span class="tag t-{r['layer']}">{LAYER_LABEL.get(r['layer'], r['layer'])}</span>
 <span class="tag t-{r['conf']}">{CONF_LABEL[r['conf']]}</span>
 <span class="lk">{links_html}</span></div>
 <div class="co"><b>{esc(r['company'])}</b> · {esc(r['city'])} · {esc(plat)}</div>
+{shots_html}
 <div class="gr">{fs}</div>
 <div class="vv"><b>拜访价值 </b>{esc(r['visit_value'])}</div>
 </div>"""
