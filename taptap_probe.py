@@ -21,7 +21,15 @@ def get(u, retry=2):
 
 
 def nuxt_payload(t):
-    i = t.find('[["Reactive"')
+    # 2026-09 起 TapTap 把 SSR payload 从 [["Reactive" 改为 [["ShallowReactive"，
+    # 并固定放在 id="__NUXT_DATA__" 的 script 里。优先按标签定位，兼容旧标记。
+    i = t.find('id="__NUXT_DATA__"')
+    if i >= 0:
+        i = t.find('[', i)
+    else:
+        i = t.find('[["Reactive"')
+        if i < 0:
+            i = t.find('[["ShallowReactive"')
     if i < 0:
         return None
     dep = 0
