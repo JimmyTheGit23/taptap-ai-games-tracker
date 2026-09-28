@@ -589,6 +589,23 @@ ROWS = [
         conf='A',
         src='Steam 商店页 app 4751410（OpenRouter 披露）2026-09 / TapTap app 917178 实测 2026-09-21 / 触乐本周新游周报 2026-09-09 / 新浪看点评测（付费机制细节）/ 玩一玩游戏网（官方免费体验说明）',
     ),
+    dict(
+        game='奇迹工厂 Brave New Wonders', app_id='791536', layer='L1',
+        company='City From Naught Inc.（无中之城）', city='多伦多（加拿大，华人创始团队）',
+        founder='Shala Chen（公开采访发言人，其余成员未公开）',
+        team_size='未知（独立工作室，2019 年成立）',
+        funding='未公开',
+        ai_mech='工厂自动化+基地建设：玩家用自然语言（任意语言）向自动机下达指令，AI 解析意图并生成可检视、可手动修正的行为图，驱动数百台自动机执行采集/冶炼/组装/战斗/物流；无传送带设计，建筑间以颜色信号联动形成反应式自动化网络；官方明示 AI 仅用于指令解析这一玩法接口，美术/模型/动画/音乐/剧情均非生成式 AI 产出',
+        ai_cost='AI 辅助功能需保持联网；买断制 72 元（首发两周 -15% 为 61.2 元），模型成本由官方承担，具体未披露',
+        stage='2026-09-21 Steam 正式发售（app 2403830，首发约 7 篇评测），同日亮相 TGS 2026 PC Gaming Show Tokyo Direct；TapTap 页（app 791536）已建并附中文介绍，实测平台标注仅 Steam',
+        channel='Steam（app 2403830，买断 72 元）+ TapTap（app 791536，电脑/主机，platform=steam）',
+        contact='官网 cityfromnaught.com（有中文预约页）/ 游戏内反馈系统 / Steam 社区',
+        expo='TGS 2026 PC Gaming Show Tokyo Direct（2026-09-21）',
+        other_product='《Keyword 2: Nightfall》（赛博朋克侦探冒险）、《Keyword: A Spider\u2019s Thread》（黑客解谜），均为传统非 AI 作品',
+        visit_value='中。"AI 作为玩法接口"的罕见样本：自然语言指令到行为图是运行时核心机制而非后台提效，与崇祯/图灵证言的"AI 驱动叙事"形成机制对照（AI 驱动系统与自动化）；华人创始团队+简中首发+LoongGate 联合发行，国内触达门槛低；但团队在多伦多、买断 PC 单机，与移动端 AI 原生商业化路线差异较大',
+        conf='A',
+        src='Steam 商店页 app 2403830（2026-09-21）/ TapTap app 791536 实测 2026-09-28（platform=steam）/ 游民星空、3DM 发售报道 2026-09-21 / GamesPress 官方通稿（工作室背景）/ TechGamingReport 采访（Shala Chen 谈指令机制）',
+    ),
 ]
 
 EXCLUDED = [
@@ -614,6 +631,7 @@ FIELDS = [
 # 相关链接（商店页/官网/报道）。全部来自调研时实际检索到的 URL，未做猜测。
 LINKS = {
     '历史模拟器：崇祯': ['https://www.taptap.cn/app/813198'],
+    '奇迹工厂 Brave New Wonders': ['https://www.taptap.cn/app/791536', 'https://store.steampowered.com/app/2403830/', 'https://www.cityfromnaught.com/bravenewwonders-cn'],
     '麦琪的花园 Magi Scapes': ['https://store.steampowered.com/app/2990190/', 'https://autogame.ai'],
     '乌托 Agentopia': ['https://www.taptap.cn/app/773812'],
     '群星低语 Whispers from the Star': ['https://www.taptap.cn/app/746715'],
@@ -659,6 +677,7 @@ LINKS = {
 # 「渠道」= 按已知发行渠道推断；「待核实」= 信息不足。
 PLATFORM = {
     '历史模拟器：崇祯': 'PC（实测；TapTap PC 端 + Steam）',
+    '奇迹工厂 Brave New Wonders': 'PC（实测 2026-09-28 platform=steam；TapTap 电脑/主机页）',
     '黑历史：献帝': '手游双端（实测 android+iOS）',
     '麦琪的花园 Magi Scapes': 'PC 优先（Steam 三测），移动端计划',
     '乌托 Agentopia': '手游双端（实测 android+iOS）',
